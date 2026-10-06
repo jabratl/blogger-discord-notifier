@@ -1,0 +1,64 @@
+name: Send message to Discord
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "Which channel"
+        type: choice
+        options: [general, novels, chapters]
+        default: general
+      ping:
+        description: "Who to ping"
+        type: choice
+        options: [none, chapter_role, novel_role]
+        default: none
+      style:
+        description: "Look of the message"
+        type: choice
+        options: [embed, plain]
+        default: embed
+      title:
+        description: "Title (optional)"
+        type: string
+        required: false
+      message:
+        description: "Your message. Type \\n where you want a new line"
+        type: string
+        required: true
+      link_url:
+        description: "Link (optional, makes the title clickable)"
+        type: string
+        required: false
+      image_url:
+        description: "Image URL (optional)"
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Send
+        env:
+          CHAPTER_WEBHOOK: ${{ secrets.CHAPTER_WEBHOOK }}
+          NOVEL_WEBHOOK: ${{ secrets.NOVEL_WEBHOOK }}
+          GENERAL_WEBHOOK: ${{ secrets.GENERAL_WEBHOOK }}
+          CHAPTER_ROLE_ID: ${{ secrets.CHAPTER_ROLE_ID }}
+          NOVEL_ROLE_ID: ${{ secrets.NOVEL_ROLE_ID }}
+          CHANNEL: ${{ inputs.channel }}
+          PING: ${{ inputs.ping }}
+          STYLE: ${{ inputs.style }}
+          TITLE: ${{ inputs.title }}
+          MESSAGE: ${{ inputs.message }}
+          LINK_URL: ${{ inputs.link_url }}
+          IMAGE_URL: ${{ inputs.image_url }}
+        run: python send_message.py
