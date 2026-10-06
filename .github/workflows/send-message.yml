@@ -4,9 +4,25 @@ on:
   workflow_dispatch:
     inputs:
       channel:
-        description: "Which channel"
+        description: "Select target channel"
         type: choice
-        options: [general, novels, chapters]
+        options:
+          - general
+          - chapters
+          - novels
+          - rules
+          - server_roles
+          - server_announcements
+          - level
+          - novel_lists
+          - novel_roles
+          - off_topic
+          - novel_discussions
+          - novel_recommendations
+          - novel_request
+          - spoilers
+          - novel_illustration
+          - nsfw
         default: general
       ping:
         description: "Who to ping"
@@ -27,7 +43,7 @@ on:
         type: string
         required: true
       link_url:
-        description: "Link (optional, makes the title clickable)"
+        description: "Link (optional, makes title clickable)"
         type: string
         required: false
       image_url:
@@ -52,6 +68,19 @@ jobs:
           CHAPTER_WEBHOOK: ${{ secrets.CHAPTER_WEBHOOK }}
           NOVEL_WEBHOOK: ${{ secrets.NOVEL_WEBHOOK }}
           GENERAL_WEBHOOK: ${{ secrets.GENERAL_WEBHOOK }}
+          RULES_WEBHOOK: ${{ secrets.RULES_WEBHOOK }}
+          SERVER_ROLES_WEBHOOK: ${{ secrets.SERVER_ROLES_WEBHOOK }}
+          SERVER_ANNOUNCEMENTS_WEBHOOK: ${{ secrets.SERVER_ANNOUNCEMENTS_WEBHOOK }}
+          LEVEL_WEBHOOK: ${{ secrets.LEVEL_WEBHOOK }}
+          NOVEL_LISTS_WEBHOOK: ${{ secrets.NOVEL_LISTS_WEBHOOK }}
+          NOVEL_ROLES_WEBHOOK: ${{ secrets.NOVEL_ROLES_WEBHOOK }}
+          OFF_TOPIC_WEBHOOK: ${{ secrets.OFF_TOPIC_WEBHOOK }}
+          NOVEL_DISCUSSIONS_WEBHOOK: ${{ secrets.NOVEL_DISCUSSIONS_WEBHOOK }}
+          NOVEL_RECOMMENDATIONS_WEBHOOK: ${{ secrets.NOVEL_RECOMMENDATIONS_WEBHOOK }}
+          NOVEL_REQUEST_WEBHOOK: ${{ secrets.NOVEL_REQUEST_WEBHOOK }}
+          SPOILERS_WEBHOOK: ${{ secrets.SPOILERS_WEBHOOK }}
+          NOVEL_ILLUSTRATION_WEBHOOK: ${{ secrets.NOVEL_ILLUSTRATION_WEBHOOK }}
+          NSFW_WEBHOOK: ${{ secrets.NSFW_WEBHOOK }}
           CHAPTER_ROLE_ID: ${{ secrets.CHAPTER_ROLE_ID }}
           NOVEL_ROLE_ID: ${{ secrets.NOVEL_ROLE_ID }}
           CHANNEL: ${{ inputs.channel }}
