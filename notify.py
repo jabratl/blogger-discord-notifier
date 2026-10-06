@@ -31,6 +31,7 @@ CHAPTER_ROLE    = os.environ.get("CHAPTER_ROLE_ID", "").strip()
 NOVEL_ROLE      = os.environ.get("NOVEL_ROLE_ID", "").strip()
 DRY_RUN         = os.environ.get("DRY_RUN", "0") == "1"
 TEST_LATEST     = os.environ.get("TEST_LATEST", "0") == "1"
+ANNOUNCE_NOVEL  = os.environ.get("ANNOUNCE_NOVEL", "").strip()   # "all" or part of a novel title
 STATE_FILE      = "state.json"
 UA              = "DiscordBot (https://github.com, 1.0) JabraTL-notifier"
 
@@ -70,8 +71,8 @@ def http(url, data=None, tries=4):
     return last or (0, "failed")
 
 
-def get_feed(kind):
-    url = f"{SITE_URL}/feeds/{kind}/default?alt=json&max-results={FEED_SIZE}"
+def get_feed(kind, size=None):
+    url = f"{SITE_URL}/feeds/{kind}/default?alt=json&max-results={size or FEED_SIZE}"
     code, body = http(url)
     if code != 200:
         raise RuntimeError(f"Could not read {kind} feed ({code}): {body[:200]}")
@@ -263,10 +264,10 @@ def make_items(entries):
 
 
 # ------------------------------ novels ----------------------------------------
-def novel_payload(info):
+def novel_payload(info, spotlight=False):
     emb = {"color": EMBED_COLOR, "title": cut(info["title"], 250), "url": info["url"],
            "description": cut(info["desc"], 600) or "A new novel has been added.",
-           "footer": {"text": f"{SITE_NAME} \u2022 New novel"}}
+           "footer": {"text": f"{SITE_NAME} \u2022 " + ("Novel" if spotlight else "New novel")}}
     if info["cover"]:
         emb["image"] = {"url": info["cover"]}
     f = []
@@ -277,7 +278,7 @@ def novel_payload(info):
             f.append({"name": k, "value": cut(v, 100), "inline": True})
     if f:
         emb["fields"] = f
-    p = ping(NOVEL_ROLE, "**A new novel just arrived!**")
+    p = ping(NOVEL_ROLE, "\U0001F4DA **Novel spotlight!**" if spotlight else "**A new novel just arrived!**")
     p["embeds"] = [emb]
     return p
 
@@ -300,14 +301,42 @@ def save_state(st):
         json.dump(st, f, indent=1)
 
 
+def announce_existing(novel_idx):
+    """Manual run: post the announcement card for existing novel(s) to the novel channel."""
+    if not NOVEL_WEBHOOK and not DRY_RUN:
+        log("ERROR: NOVEL_WEBHOOK secret is missing.")
+        return 1
+    uniq, seen = [], set()
+    for info in novel_idx.values():
+        k = norm(info["id"])
+        if k not in seen:
+            seen.add(k); uniq.append(info)
+    uniq.sort(key=lambda i: i["title"].lower())
+    want = norm(ANNOUNCE_NOVEL)
+    if want != "all":
+        uniq = [i for i in uniq if want in norm(i["title"]) or want in norm(i["id"])]
+    if not uniq:
+        log(f"No novel matched '{ANNOUNCE_NOVEL}'. Use part of the novel title, or 'all'.")
+        return 1
+    bad = 0
+    for info in uniq:
+        if send(NOVEL_WEBHOOK, novel_payload(info, spotlight=True)):
+            log("Announced:", info["title"])
+        else:
+            bad += 1
+    return 1 if bad else 0
+
+
 def main():
     if not CHAPTER_WEBHOOK and not DRY_RUN:
         log("ERROR: CHAPTER_WEBHOOK secret is missing.")
         return 1
     posts = get_feed("posts")
-    pages = get_feed("pages")
+    pages = get_feed("pages", 150)
     items = make_items(posts)
     novel_idx = build_novel_index(pages)
+    if ANNOUNCE_NOVEL:
+        return announce_existing(novel_idx)
     state = load_state()
 
     # first ever run: remember what already exists, post nothing
