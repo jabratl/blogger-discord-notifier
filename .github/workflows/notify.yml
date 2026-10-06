@@ -13,6 +13,10 @@ on:
         description: "Send the latest chapter once as a test"
         type: boolean
         default: false
+      announce_novel:
+        description: "Announce existing novel(s) in the novel channel: type 'all' or part of the novel title"
+        type: string
+        required: false
 
 permissions:
   contents: write
@@ -40,6 +44,7 @@ jobs:
           NOVEL_ROLE_ID: ${{ secrets.NOVEL_ROLE_ID }}
           DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
           TEST_LATEST: ${{ inputs.test_latest && '1' || '0' }}
+          ANNOUNCE_NOVEL: ${{ inputs.announce_novel }}
         run: python notify.py
 
       - name: Save state
